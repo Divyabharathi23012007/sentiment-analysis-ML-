@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analysis - AI Powered Text Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .sentiment-positive {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        .sentiment-negative {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        .animate-pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .typing-indicator {
+            display: inline-flex;
+            gap: 4px;
+        }
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #6366f1;
+            animation: typing 1.4s infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-brain text-3xl"></i>
+                    <div>
+                        <h1 class="text-2xl font-bold">Sentiment Analysis</h1>
+                        <p class="text-purple-100 text-sm">AI-Powered Text Analysis</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="status-badge" class="bg-green-500 text-white px-3 py-1 rounded-full text-sm flex items-center">
+                        <span class="w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></span>
+                        Ready
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Introduction Card -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                <div class="flex items-start space-x-4">
+                    <div class="bg-purple-100 p-3 rounded-lg">
+                        <i class="fas fa-info-circle text-purple-600 text-xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h2 class="text-lg font-semibold text-gray-800 mb-2">How it works</h2>
+                        <p class="text-gray-600 mb-3">
+                            Our advanced Naïve Bayes model analyzes your text to determine whether the sentiment is positive or negative. 
+                            Simply type or paste your text below and get instant results with confidence scores.
+                        </p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm">
+                                <i class="fas fa-robot mr-1"></i> Machine Learning
+                            </span>
+                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
+                                <i class="fas fa-bolt mr-1"></i> Real-time Analysis
+                            </span>
+                            <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">
+                                <i class="fas fa-chart-line mr-1"></i> Confidence Scores
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Section -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <label for="text-input" class="block text-lg font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-edit mr-2 text-purple-600"></i>
+                    Enter your text for analysis
+                </label>
+                <textarea 
+                    id="text-input" 
+                    rows="6" 
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none transition-all duration-200"
+                    placeholder="Type or paste your text here... For example: 'I love this product! It's amazing and works perfectly.'"
+                ></textarea>
+                <div class="flex justify-between items-center mt-4">
+                    <span id="char-count" class="text-sm text-gray-500">0 characters</span>
+                    <button 
+                        id="analyze-btn" 
+                        class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 flex items-center space-x-2"
+                    >
+                        <i class="fas fa-search"></i>
+                        <span>Analyze Sentiment</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loading-state" class="hidden bg-white rounded-xl shadow-md p-8 mb-6">
+                <div class="text-center">
+                    <div class="typing-indicator justify-center mb-4">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                    <p class="text-gray-600">Analyzing your text...</p>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results-section" class="hidden">
+                <!-- Result Card -->
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-chart-bar mr-2 text-purple-600"></i>
+                        Analysis Results
+                    </h3>
+                    
+                    <!-- Sentiment Display -->
+                    <div id="sentiment-display" class="mb-6">
+                        <!-- Dynamic content will be inserted here -->
+                    </div>
+
+                    <!-- Confidence Scores -->
+                    <div id="confidence-scores" class="mb-6">
+                        <!-- Dynamic content will be inserted here -->
+                    </div>
+
+                    <!-- Original Text -->
+                    <div class="border-t pt-4">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-2">Original Text:</h4>
+                        <p id="original-text" class="text-gray-600 bg-gray-50 p-3 rounded-lg"></p>
+                    </div>
+
+                    <!-- Timestamp -->
+                    <div class="text-sm text-gray-500 mt-4">
+                        <i class="fas fa-clock mr-1"></i>
+                        <span id="timestamp"></span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap gap-3">
+                    <button 
+                        id="new-analysis-btn" 
+                        class="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-200 flex items-center space-x-2"
+                    >
+                        <i class="fas fa-redo"></i>
+                        <span>New Analysis</span>
+                    </button>
+                    <button 
+                        id="copy-results-btn" 
+                        class="bg-gray-600 hover:bg-gray-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-200 flex items-center space-x-2"
+                    >
+                        <i class="fas fa-copy"></i>
+                        <span>Copy Results</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Error Section -->
+            <div id="error-section" class="hidden bg-red-50 border border-red-200 rounded-xl p-6 mb-6">
+                <div class="flex items-start space-x-3">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-xl mt-1"></i>
+                    <div>
+                        <h3 class="text-lg font-semibold text-red-800 mb-2">Analysis Error</h3>
+                        <p id="error-message" class="text-red-600"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-12">
+        <div class="container mx-auto px-4 py-6">
+            <div class="text-center">
+                <p class="text-gray-400">
+                    <i class="fas fa-heart text-red-500 mx-1"></i>
+                    Powered by Naïve Bayes Machine Learning
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // DOM Elements
+        const textInput = document.getElementById('text-input');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const loadingState = document.getElementById('loading-state');
+        const resultsSection = document.getElementById('results-section');
+        const errorSection = document.getElementById('error-section');
+        const charCount = document.getElementById('char-count');
+        const newAnalysisBtn = document.getElementById('new-analysis-btn');
+        const copyResultsBtn = document.getElementById('copy-results-btn');
+        const statusBadge = document.getElementById('status-badge');
+
+        // Character count
+        textInput.addEventListener('input', () => {
+            const count = textInput.value.length;
+            charCount.textContent = `${count} characters`;
+        });
+
+        // Analyze button click
+        analyzeBtn.addEventListener('click', analyzeSentiment);
+        textInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                analyzeSentiment();
+            }
+        });
+
+        // New analysis button
+        newAnalysisBtn.addEventListener('click', () => {
+            textInput.value = '';
+            charCount.textContent = '0 characters';
+            resultsSection.classList.add('hidden');
+            errorSection.classList.add('hidden');
+            textInput.focus();
+        });
+
+        // Copy results button
+        copyResultsBtn.addEventListener('click', () => {
+            const results = document.getElementById('original-text').textContent;
+            const sentiment = document.querySelector('#sentiment-display .text-2xl').textContent;
+            const textToCopy = `Sentiment: ${sentiment}\n\nText: ${results}`;
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                copyResultsBtn.innerHTML = '<i class="fas fa-check"></i><span>Copied!</span>';
+                setTimeout(() => {
+                    copyResultsBtn.innerHTML = '<i class="fas fa-copy"></i><span>Copy Results</span>';
+                }, 2000);
+            });
+        });
+
+        async function analyzeSentiment() {
+            const text = textInput.value.trim();
+            
+            if (!text) {
+                showError('Please enter some text for analysis.');
+                return;
+            }
+
+            // Show loading state
+            loadingState.classList.remove('hidden');
+            resultsSection.classList.add('hidden');
+            errorSection.classList.add('hidden');
+            analyzeBtn.disabled = true;
+            updateStatus('Analyzing...', 'yellow');
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showResults(data);
+                    updateStatus('Ready', 'green');
+                } else {
+                    showError(data.error || 'Analysis failed. Please try again.');
+                    updateStatus('Error', 'red');
+                }
+            } catch (error) {
+                showError('Network error. Please check your connection and try again.');
+                updateStatus('Error', 'red');
+            } finally {
+                loadingState.classList.add('hidden');
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        function showResults(data) {
+            const sentimentDisplay = document.getElementById('sentiment-display');
+            const confidenceScores = document.getElementById('confidence-scores');
+            const originalText = document.getElementById('original-text');
+            const timestamp = document.getElementById('timestamp');
+
+            // Set sentiment display
+            const isPositive = data.prediction === 'positive';
+            const sentimentClass = isPositive ? 'sentiment-positive' : 'sentiment-negative';
+            const sentimentIcon = isPositive ? 'fa-smile' : 'fa-frown';
+            const sentimentText = isPositive ? 'Positive' : 'Negative';
+
+            sentimentDisplay.innerHTML = `
+                <div class="${sentimentClass} text-white p-6 rounded-lg text-center">
+                    <i class="fas ${sentimentIcon} text-4xl mb-3"></i>
+                    <div class="text-2xl font-bold mb-2">${sentimentText}</div>
+                    <div class="text-sm opacity-90">Detected Sentiment</div>
+                </div>
+            `;
+
+            // Set confidence scores
+            if (data.probabilities) {
+                const positiveProb = (data.probabilities.positive * 100).toFixed(1);
+                const negativeProb = (data.probabilities.negative * 100).toFixed(1);
+
+                confidenceScores.innerHTML = `
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Confidence Scores:</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm font-medium text-green-600">Positive</span>
+                                <span class="text-sm text-gray-600">${positiveProb}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full transition-all duration-500" style="width: ${positiveProb}%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm font-medium text-red-600">Negative</span>
+                                <span class="text-sm text-gray-600">${negativeProb}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-red-500 h-2 rounded-full transition-all duration-500" style="width: ${negativeProb}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Set original text and timestamp
+            originalText.textContent = data.text;
+            timestamp.textContent = new Date(data.timestamp).toLocaleString();
+
+            // Show results
+            resultsSection.classList.remove('hidden');
+        }
+
+        function showError(message) {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = message;
+            errorSection.classList.remove('hidden');
+            resultsSection.classList.add('hidden');
+        }
+
+        function updateStatus(text, color) {
+            const colorClasses = {
+                green: 'bg-green-500',
+                yellow: 'bg-yellow-500',
+                red: 'bg-red-500'
+            };
+
+            statusBadge.className = `${colorClasses[color]} text-white px-3 py-1 rounded-full text-sm flex items-center`;
+            statusBadge.innerHTML = `
+                <span class="w-2 h-2 bg-white rounded-full mr-2 ${color === 'yellow' ? 'animate-pulse' : ''}"></span>
+                ${text}
+            `;
+        }
+
+        // Check health on page load
+        fetch('/health')
+            .then(response => response.json())
+            .then(data => {
+                if (data.model_loaded) {
+                    updateStatus('Ready', 'green');
+                } else {
+                    updateStatus('Model Error', 'red');
+                    showError('The sentiment analysis model is not loaded. Please refresh the page.');
+                }
+            })
+            .catch(() => {
+                updateStatus('Connection Error', 'red');
+                showError('Unable to connect to the server. Please check your connection.');
+            });
+    </script>
+</body>
+</html>
